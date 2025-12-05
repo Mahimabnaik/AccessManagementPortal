@@ -1,4 +1,5 @@
-import React from "react";
+// frontend/src/components/NavBar.jsx
+import React, { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { FaKey } from "react-icons/fa";
 
@@ -13,11 +14,38 @@ const NavBar = () => {
   const navigate = useNavigate();
   const isLanding = location.pathname === "/" || location.pathname === "/login";
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const readUser = () => {
+      try {
+        const raw =
+          localStorage.getItem("user") || sessionStorage.getItem("user");
+        const user = raw ? JSON.parse(raw) : null;
+        setIsAdmin(user && user.role && user.role.toLowerCase() === "admin");
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+    readUser();
+
+    const onStorage = (e) => {
+      if (e.key === "user") readUser();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
+      localStorage.removeItem("user"); // if you store user here
       navigate("/login");
     }
   };
+
+  const visibleLinks = navLinks.filter(
+    (link) => link.to !== "/admin" || isAdmin
+  );
 
   return (
     <nav className="bg-gradient-to-r from-teal-700 to-cyan-700 text-white shadow-lg">
@@ -31,7 +59,7 @@ const NavBar = () => {
         {/* Nav Links & Logout */}
         <div className="flex gap-6 items-center">
           {!isLanding &&
-            navLinks.map(({ to, label }) => (
+            visibleLinks.map(({ to, label }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -50,14 +78,12 @@ const NavBar = () => {
                           isActive
                             ? "opacity-100 scale-x-100"
                             : "opacity-0 scale-x-0"
-                        }
-                      `}
+                        }`}
                     />
                   </span>
                 )}
               </NavLink>
             ))}
-          {/* Logout button only when not on landing/login */}
           {!isLanding && (
             <button
               onClick={handleLogout}

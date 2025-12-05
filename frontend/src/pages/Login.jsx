@@ -27,8 +27,10 @@ export default function Login() {
       }
 
       setTimeout(() => {
-        if (user.role === "admin") navigate("/admin");
-        else navigate("/dashboard");
+        const path = user.role === "admin" ? "/admin" : "/dashboard";
+        navigate(path);
+
+        setTimeout(() => window.location.reload(), 50);
       }, 350);
     } catch (err) {
       console.error(err);
